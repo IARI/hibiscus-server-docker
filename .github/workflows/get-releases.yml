@@ -1,0 +1,33 @@
+name: Get latest release version
+on:
+  schedule:
+    - cron:  '0 10 * * */2'
+  workflow_dispatch:
+    inputs:
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.REPO_SCOPED_TOKEN }}
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.13'
+      - name: Install dependencies
+        run: npm install
+      - name: Fetch release version
+        run: npm run get-version
+#          curl -sL https://api.github.com/repos/swagger-api/swagger-ui/releases/latest | \
+#          jq -r ".tag_name" > release-versions/swagger-ui-latest.txt
+      - name: Check for modified files
+        id: git-check
+        run: echo ::set-output name=modified::$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")
+      - name: Commit latest release version
+        if: steps.git-check.outputs.modified == 'true'
+        run: |
+          git config --global user.name 'Julian Jarecki'
+          git config --global user.email 'julian.jarecki@gmail.com'
+          git commit -am "New release version"
+          git push
