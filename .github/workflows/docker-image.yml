@@ -10,6 +10,10 @@ on:
   workflow_dispatch:
     inputs:
 
+env:
+  DOCKER_USER: ${{ secrets.DOCKER_USER }}
+
+
 jobs:
 
   build:
@@ -18,18 +22,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Set the value
+      run: |
+        echo "version=$(cat release-version)" >> $GITHUB_ENV
     - name: Login to Docker Hub
       env:
-        DOCKER_USER: ${{ secrets.DOCKER_USER }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       run: |
         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - name: Build the Docker image
       env:
         DOCKER_BUILDKIT: 1
-      run: docker build . --file Dockerfile --tag hibiscus-server:$(cat release-version)
+      run: docker build . --file Dockerfile --tag hibiscus-server:${{ env.version }}
       #run: docker build . --file Dockerfile --tag hibiscus-server:$(date +%s)
     - name: Docker Push
-      env:
-        DOCKER_USER: ${{ secrets.DOCKER_USER }}
-      run: docker push $DOCKER_USER/hibiscus-server:$(cat release-version)
+      run: docker push $DOCKER_USER/hibiscus-server:${{ env.version }}
