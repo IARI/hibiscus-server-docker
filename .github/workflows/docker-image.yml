@@ -33,7 +33,7 @@ jobs:
     - name: Build the Docker image
       env:
         DOCKER_BUILDKIT: 1
-      run: docker build . --file Dockerfile --tag hibiscus-server:${{ env.version }}
+      run: docker build . --file Dockerfile --tag $DOCKER_USER/hibiscus-server:${{ env.version }}
       #run: docker build . --file Dockerfile --tag hibiscus-server:$(date +%s)
     - name: Docker Push
       run: docker push $DOCKER_USER/hibiscus-server:${{ env.version }}
