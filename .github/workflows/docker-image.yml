@@ -7,6 +7,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
 
 jobs:
 
@@ -17,5 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
+      env:
+        DOCKER_BUILDKIT: 1
       run: docker build . --file Dockerfile --tag hibiscus-server:$(cat release-version)
       #run: docker build . --file Dockerfile --tag hibiscus-server:$(date +%s)
