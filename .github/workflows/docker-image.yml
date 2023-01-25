@@ -1,0 +1,21 @@
+name: Docker Image CI
+
+on:
+  push:
+    paths:
+      - 'release-version'
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag hibiscus-server:$(cat release-version)
+      #run: docker build . --file Dockerfile --tag hibiscus-server:$(date +%s)
