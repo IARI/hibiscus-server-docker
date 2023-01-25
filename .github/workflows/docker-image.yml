@@ -32,4 +32,4 @@ jobs:
     - name: Docker Push
       env:
         DOCKER_USER: ${{ secrets.DOCKER_USER }}
-      run docker push $DOCKER_USER/hibiscus-server:$(cat release-version)
+      run: docker push $DOCKER_USER/hibiscus-server:$(cat release-version)
