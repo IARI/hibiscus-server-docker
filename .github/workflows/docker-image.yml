@@ -33,7 +33,8 @@ jobs:
     - name: Build the Docker image
       env:
         DOCKER_BUILDKIT: 1
-      run: docker build . --file Dockerfile --tag $DOCKER_USER/hibiscus-server:${{ env.version }}
-      #run: docker build . --file Dockerfile --tag hibiscus-server:$(date +%s)
+        OPENJDK_VERSION: 20-slim
+      run: docker build . --file Dockerfile --tag $DOCKER_USER/hibiscus-server:${{ env.version }}-$OPENJDK_VERSION --build-arg OPENJDK_VERSION=$OPENJDK_VERSION
     - name: Docker Push
-      run: docker push $DOCKER_USER/hibiscus-server:${{ env.version }}
+      #run: docker push $DOCKER_USER/hibiscus-server:${{ env.version }}-$OPENJDK_VERSION
+      run: docker push $DOCKER_USER/hibiscus-server --all-tags

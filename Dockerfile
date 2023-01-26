@@ -1,6 +1,7 @@
 ARG HIBISCUS_VERSION=2.10.9 \
     HIBISCUS_DOWNLOAD_PATH=/opt/hibiscus-server.zip \
-    HIBISCUS_SERVER_PATH=/opt/hibiscus-server
+    HIBISCUS_SERVER_PATH=/opt/hibiscus-server \
+    OPENJDK_VERSION=20-slim
 
 FROM ubuntu
 ARG HIBISCUS_VERSION \
@@ -20,7 +21,7 @@ RUN wget https://www.willuhn.de/products/hibiscus-server/releases/hibiscus-serve
 #    && chmod -R 775 $HIBISCUS_SERVER_PATH
 
 
-FROM openjdk:20-slim as hibiscus-server
+FROM openjdk:$OPENJDK_VERSION as hibiscus-server
 ARG HIBISCUS_VERSION \
     HIBISCUS_DOWNLOAD_PATH \
     HIBISCUS_SERVER_PATH

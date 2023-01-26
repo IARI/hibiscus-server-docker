@@ -19,8 +19,6 @@ jobs:
         run: npm install
       - name: Fetch release version
         run: npm run get-version
-#          curl -sL https://api.github.com/repos/swagger-api/swagger-ui/releases/latest | \
-#          jq -r ".tag_name" > release-versions/swagger-ui-latest.txt
       - name: Check for modified files
         id: git-check
         run: echo ::set-output name=modified::$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")
