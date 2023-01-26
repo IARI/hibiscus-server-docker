@@ -38,7 +38,7 @@ jobs:
         docker build . --file Dockerfile \
           --tag $DOCKER_USER/hibiscus-server:${{ env.version }}-$OPENJDK_VERSION \
           --tag $DOCKER_USER/hibiscus-server:${{ env.version }} \
-          --tag latest \
+          --tag $DOCKER_USER/hibiscus-server:latest \
           --build-arg HIBISCUS_VERSION=${{ env.version }} \
           --build-arg OPENJDK_VERSION=$OPENJDK_VERSION
     - name: Docker Push
