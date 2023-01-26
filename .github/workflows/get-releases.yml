@@ -19,6 +19,9 @@ jobs:
         run: npm install
       - name: Fetch release version
         run: npm run get-version
+      - name: Store Version number in env
+        run: |
+          echo "version=$(cat release-version)" >> $GITHUB_ENV
       - name: Check for modified files
         id: git-check
         run: echo ::set-output name=modified::$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")
@@ -27,5 +30,5 @@ jobs:
         run: |
           git config --global user.name 'Julian Jarecki'
           git config --global user.email 'julian.jarecki@gmail.com'
-          git commit -am "New release version"
+          git commit -am "Release version ${{ env.version }}"
           git push
