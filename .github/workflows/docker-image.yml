@@ -34,7 +34,11 @@ jobs:
       env:
         DOCKER_BUILDKIT: 1
         OPENJDK_VERSION: 20-slim
-      run: docker build . --file Dockerfile --tag $DOCKER_USER/hibiscus-server:${{ env.version }}-$OPENJDK_VERSION --build-arg OPENJDK_VERSION=$OPENJDK_VERSION
+      run: |
+        docker build . --file Dockerfile \
+          --tag $DOCKER_USER/hibiscus-server:${{ env.version }}-$OPENJDK_VERSION \
+          --tag $DOCKER_USER/hibiscus-server:${{ env.version }} \
+          --tag latest \
+          --build-arg OPENJDK_VERSION=$OPENJDK_VERSION
     - name: Docker Push
-      #run: docker push $DOCKER_USER/hibiscus-server:${{ env.version }}-$OPENJDK_VERSION
       run: docker push $DOCKER_USER/hibiscus-server --all-tags
