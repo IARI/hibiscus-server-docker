@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  hibiscus-server:
+    container_name: hibiscus-server
+    restart: always
+    image: iari/hibiscus-server:2.10.9
+    volumes:
+      - hibiscus_cfg:/opt/hibiscus-server/cfg
+      - jameica_data:/root/.jameica
+    networks:
+      proxy:
+    environment:
+      HIBISCUS_PASSWORD: mySecretPassword
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hibiscus.entrypoints=https"
+      - "traefik.http.routers.hibiscus.rule=Host(`hibiscus.myfancydomain.finance`)"
+      - "traefik.http.services.hibiscus.loadbalancer.server.port=8080"
+
+  hibiscus-mariadb:
+    container_name: "hibiscus-mariadb"
+    image: "mariadb:latest"
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    restart: always
+    volumes:
+      - "hibiscus-db:/var/lib/mysql"
+    environment:
+      - "MYSQL_ROOT_PASSWORD=mySecretRootPw"
+      - "MYSQL_DATABASE=hibiscus"
+      - "MYSQL_USER=hibiscus"
+      - "MYSQL_PASSWORD=hibiscus"
+    networks:
+      proxy:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.hibiscusdb.entrypoints=mariadb"
+      - "traefik.tcp.routers.hibiscusdb.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.hibiscusdb.service=hibiscusdb"
+      - "traefik.tcp.services.hibiscusdb.loadbalancer.server.port=3306"
+
+
+
+volumes:
+  hibiscus-db:
+  hibiscus_cfg:
+  jameica_data:
+
+
+networks:
+  proxy:
+    external: true
