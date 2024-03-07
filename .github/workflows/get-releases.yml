@@ -27,8 +27,10 @@ jobs:
         run: echo ::set-output name=modified::$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")
       - name: Commit latest release version
         if: steps.git-check.outputs.modified == 'true'
+        #git config --global user.name 'Julian Jarecki'
+        #git config --global user.email 'julian.jarecki@gmail.com'
         run: |
-          git config --global user.name 'Julian Jarecki'
-          git config --global user.email 'julian.jarecki@gmail.com'
+          git config user.name github-actions
+          git config user.email github-actions@github.com
           git commit -am "Release version ${{ env.version }}"
           git push
