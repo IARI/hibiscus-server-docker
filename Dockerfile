@@ -1,38 +1,21 @@
-ARG HIBISCUS_VERSION=2.10.9 \
-    HIBISCUS_DOWNLOAD_PATH=/opt/hibiscus-server.zip \
-    HIBISCUS_SERVER_PATH=/opt/hibiscus-server \
-    OPENJDK_VERSION=20-slim
+ARG HIBISCUS_VERSION=2.10.25
+FROM debian:bookworm-slim AS download
+ARG HIBISCUS_VERSION
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl unzip \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl --fail --location --retry 3 --connect-timeout 15 --max-time 180 \
+      "https://www.willuhn.de/products/hibiscus-server/releases/hibiscus-server-${HIBISCUS_VERSION}.zip" \
+      --output /tmp/hibiscus-server.zip \
+    && unzip -q /tmp/hibiscus-server.zip -d /opt \
+    && test -f /opt/hibiscus-server/jameica-linux.jar \
+    && rm /tmp/hibiscus-server.zip
 
-FROM ubuntu
-ARG HIBISCUS_VERSION \
-    HIBISCUS_DOWNLOAD_PATH \
-    HIBISCUS_SERVER_PATH
-
-RUN apt update \
-    && apt install -y zip unzip wget
-
-RUN wget https://www.willuhn.de/products/hibiscus-server/releases/hibiscus-server-${HIBISCUS_VERSION}.zip -O $HIBISCUS_DOWNLOAD_PATH \
-    && echo $HIBISCUS_SERVER_PATH \
-    && mkdir -p $HIBISCUS_SERVER_PATH \
-    && unzip $HIBISCUS_DOWNLOAD_PATH -d $HIBISCUS_SERVER_PATH \
-    && mv ${HIBISCUS_SERVER_PATH}/hibiscus-server/* $HIBISCUS_SERVER_PATH \
-    && rm -rf ${HIBISCUS_SERVER_PATH}/hibiscus-server
-#    && rm $HIBISCUS_DOWNLOAD_PATH \
-#    && chmod -R 775 $HIBISCUS_SERVER_PATH
-
-
-FROM openjdk:$OPENJDK_VERSION as hibiscus-server
-ARG HIBISCUS_VERSION \
-    HIBISCUS_DOWNLOAD_PATH \
-    HIBISCUS_SERVER_PATH
-
-ENV HIBISCUS_PASSWORD=password
-
-RUN mkdir -p $HIBISCUS_SERVER_PATH
-COPY --chmod=775 --from=0 $HIBISCUS_SERVER_PATH $HIBISCUS_SERVER_PATH
-WORKDIR $HIBISCUS_SERVER_PATH
-
-#/cfg/de.willuhn.jameica.hbci.rmi.HBCIDBService.properties
-#/cfg/de.willuhn.jameica.webadmin.Plugin.properties
-
-CMD ["./jameicaserver.sh", "-p ${HIBISCUS_PASSWORD}"]
+FROM eclipse-temurin:21-jre-jammy
+ARG HIBISCUS_VERSION
+LABEL org.opencontainers.image.source="https://github.com/IARI/hibiscus-server-docker" \
+      org.opencontainers.image.version="${HIBISCUS_VERSION}"
+COPY --from=download /opt/hibiscus-server /opt/hibiscus-server
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/hibiscus-entrypoint
+WORKDIR /opt/hibiscus-server
+EXPOSE 8080
+ENTRYPOINT ["hibiscus-entrypoint"]

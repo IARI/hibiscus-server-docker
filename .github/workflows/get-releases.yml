@@ -1,36 +1,53 @@
 name: Get latest release version
 on:
   schedule:
-    - cron:  '0 2 1 * *'
+    - cron: '0 2 * * 1'
   workflow_dispatch:
-    inputs:
+permissions:
+  contents: write
+concurrency:
+  group: hibiscus-release-check
+  cancel-in-progress: false
 jobs:
   get-version:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.version.outputs.changed }}
+      version: ${{ steps.version.outputs.version }}
+      ref: ${{ steps.version.outputs.ref }}
     steps:
       - uses: actions/checkout@v4
-        #with:
-        #  token: ${{ secrets.REPO_SCOPED_TOKEN }}
-      - name: Use Node.js
-        uses: actions/setup-node@v3
         with:
-          node-version: '18.13'
-      - name: Install dependencies
-        run: npm install
-      - name: Fetch release version
-        run: npm run get-version
-      - name: Store Version number in env
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test release parser
+        run: node --test
+      - name: Fetch official release
+        run: node get-version-from-changelog.js
+      - name: Record version
+        id: version
         run: |
-          echo "version=$(cat release-version)" >> $GITHUB_ENV
-      - name: Check for modified files
-        id: git-check
-        run: echo ::set-output name=modified::$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")
-      - name: Commit latest release version
-        if: steps.git-check.outputs.modified == 'true'
-        #git config --global user.name 'Julian Jarecki'
-        #git config --global user.email 'julian.jarecki@gmail.com'
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git commit -am "Release version ${{ env.version }}"
-          git push
+          echo "version=$(cat release-version)" >> "$GITHUB_OUTPUT"
+          if ! git diff --quiet -- release-version; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add release-version
+            git commit -m "Release version $(cat release-version)"
+            git push origin HEAD:main
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          fi
+          echo "ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  build:
+    needs: get-version
+    if: needs.get-version.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      version: ${{ needs.get-version.outputs.version }}
+      ref: ${{ needs.get-version.outputs.ref }}
+    secrets: inherit

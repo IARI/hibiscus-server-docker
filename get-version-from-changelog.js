@@ -1,26 +1,43 @@
-import { DOMParser } from 'xmldom'
-import xpath from 'xpath'
-import fs from 'fs'
+import fs from 'node:fs/promises'
+import { pathToFileURL } from 'node:url'
 
-(async function(){
-    const url = "https://www.willuhn.de/products/hibiscus-server/changelog.php"
-    const response = await fetch(url)
-    const htmlStr = await response.text();
+export function parseVersion(text) {
+  const plain = text.trim()
+  if (/^\d+\.\d+\.\d+$/.test(plain)) return plain
+  const pre = text.match(/<pre\b[^>]*>([\s\S]*?)<\/pre>/i)?.[1]
+  const firstLine = pre?.trim().split(/\r?\n/)[0].replace(/<[^>]+>/g, '')
+  const version = firstLine?.match(/\bVersion\s+(\d+\.\d+\.\d+)\b/i)?.[1]
+    || firstLine?.match(/\b(\d+\.\d+\.\d+)\b/)?.[1]
+  if (!version) throw new Error('Official release response contains no stable version')
+  return version
+}
 
-    const warnCallback = function(w){console.log('FUCK '+w)}
-    const parser = new DOMParser({
-        errorHandler: {warning: warnCallback, error: warnCallback,fatalError: warnCallback}
-    });
-    const xmlDoc = parser.parseFromString(htmlStr, "text/html");
-    const path = xpath.parse('//pre/text()');
-    const data = path.select({node: xmlDoc, isHtml: true})
-    console.log("got "+data.length+" results")
-    const [releaseDate,,version] = data[0].data.split("\n")[0].split(" ");
-    console.log({releaseDate, version})
-    fs.writeFile('release-version', version, err=>{
-        if (err) {
-            console.error("could not write release-version");
-            console.error(err);
-        }
-    })
-})()
+async function main() {
+  let version
+  for (const url of [
+    'https://www.willuhn.de/products/hibiscus-server/releases/version',
+    'https://www.willuhn.de/products/hibiscus-server/changelog.php'
+  ]) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await fetch(url, { signal: AbortSignal.timeout(20000) })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        version = parseVersion(await response.text())
+        break
+      } catch (error) {
+        console.error(`Release check failed (${new URL(url).pathname}): ${error.cause?.code || error.message}`)
+      }
+    }
+    if (version) break
+  }
+  if (!version) throw new Error('Official release site unavailable; existing version left unchanged')
+  const existing = (await fs.readFile('release-version', 'utf8')).trim()
+  const parts = (value) => value.split('.').map(Number)
+  const old = parts(existing), next = parts(version)
+  const difference = next.map((n, i) => n - old[i]).find((n) => n !== 0) || 0
+  if (difference < 0) throw new Error('Refusing to downgrade the recorded release')
+  await fs.writeFile('release-version', version + '\n')
+  console.log(`Official stable Hibiscus Server release: ${version}`)
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
+  main().catch((error) => { console.error(error.message); process.exitCode = 1 })
