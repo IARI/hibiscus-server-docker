@@ -8,4 +8,5 @@ test('takes the first release header instead of a version mentioned in older not
 test('rejects error pages and nightly versions', () => {
   assert.throws(() => parseVersion('<html>Unavailable</html>'))
   assert.throws(() => parseVersion('2.13.0-nightly'))
+  assert.throws(() => parseVersion('<pre>01.10.2026 Version 2.13.0-nightly</pre>'))
 })

@@ -6,6 +6,7 @@ export function parseVersion(text) {
   if (/^\d+\.\d+\.\d+$/.test(plain)) return plain
   const pre = text.match(/<pre\b[^>]*>([\s\S]*?)<\/pre>/i)?.[1]
   const firstLine = pre?.trim().split(/\r?\n/)[0].replace(/<[^>]+>/g, '')
+  if (/\b\d+\.\d+\.\d+[-+]/.test(firstLine || '')) throw new Error('Not a stable release header')
   const version = firstLine?.match(/\bVersion\s+(\d+\.\d+\.\d+)\b/i)?.[1]
     || firstLine?.match(/\b(\d+\.\d+\.\d+)\b/)?.[1]
   if (!version) throw new Error('Official release response contains no stable version')

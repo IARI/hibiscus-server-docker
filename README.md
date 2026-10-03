@@ -20,6 +20,13 @@ if that happens.
 
 ## Running
 
+If the official archive server is unavailable, the manual **Recovery image from
+previously published bundle** workflow repackages our own digest-pinned 2.10.17
+bundle with Java 21. It publishes only `2.10.17-java21-recovery`, never `latest`.
+This is an interim recovery package, not the latest upstream release. Verify its
+schema compatibility before use; resume the official release workflow when the
+download site becomes available.
+
 Set `HIBISCUS_PASSWORD` to the existing Jameica profile password. It is required;
 there is no default password. The entrypoint preserves spaces and shell characters
 and forwards signals directly to Java. Override heap size with `JAVA_HEAP_SIZE`

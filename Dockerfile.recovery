@@ -1,0 +1,11 @@
+# Repackage our previously published official bundle without downloading it again.
+# This is an explicitly older recovery image, never published as :latest.
+FROM iari/hibiscus-server:2.10.17@sha256:0f4e7893b162c95b6926a3c0e293074d54028fce9ea66c560eb9d676e33aab02 AS bundle
+FROM eclipse-temurin:21-jre-jammy
+LABEL org.opencontainers.image.source="https://github.com/IARI/hibiscus-server-docker" \
+      org.opencontainers.image.version="2.10.17-java21-recovery"
+COPY --from=bundle /opt/hibiscus-server /opt/hibiscus-server
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/hibiscus-entrypoint
+WORKDIR /opt/hibiscus-server
+EXPOSE 8080
+ENTRYPOINT ["hibiscus-entrypoint"]
